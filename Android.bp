@@ -1,0 +1,236 @@
+//
+// Copyright (C) 2026 The uwuAOSP Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+package {
+    default_applicable_licenses: ["external_llama_license"],
+    default_visibility: ["//visibility:public"],
+}
+
+license {
+    name: "external_llama_license",
+    visibility: [":__subpackages__"],
+    license_kinds: [
+        "SPDX-license-identifier-MIT",
+    ],
+    license_text: ["LICENSE"],
+}
+
+cc_defaults {
+    name: "uwu_llama_cpp_defaults",
+    compile_multilib: "64",
+    cpp_std: "c++17",
+    rtti: true,
+    lto: {
+        never: true,
+    },
+    cflags: [
+        "-D_GNU_SOURCE",
+        "-D_XOPEN_SOURCE=600",
+        "-DGGML_VERSION=\"0.15.3\"",
+        "-DGGML_COMMIT=\"unknown\"",
+        "-DGGML_USE_CPU",
+        "-DGGML_USE_VULKAN",
+        "-DGGML_VULKAN_COOPMAT_GLSLC_SUPPORT",
+        "-DGGML_VULKAN_COOPMAT2_GLSLC_SUPPORT",
+        "-DGGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT",
+        "-DGGML_VULKAN_BFLOAT16_GLSLC_SUPPORT",
+        "-DGGML_SCHED_MAX_COPIES=4",
+        "-Wno-unused-function",
+        "-Wno-unused-parameter",
+        "-Wno-missing-field-initializers",
+    ],
+    cppflags: [
+        "-fexceptions",
+        "-Wno-non-virtual-dtor",
+    ],
+    local_include_dirs: [
+        "include",
+        "src",
+        "src/models",
+        "ggml/include",
+        "ggml/src",
+        "ggml/src/ggml-cpu",
+        "ggml/src/ggml-vulkan",
+    ],
+}
+
+cc_library_static {
+    name: "libggml_base_c",
+    defaults: ["uwu_llama_cpp_defaults"],
+    srcs: [
+        "ggml/src/ggml.c",
+    ],
+    export_include_dirs: [
+        "ggml/include",
+        "ggml/src",
+    ],
+}
+
+cc_library_static {
+    name: "libggml_base",
+    defaults: ["uwu_llama_cpp_defaults"],
+    srcs: [
+        "ggml/src/ggml.cpp",
+        "ggml/src/ggml-alloc.c",
+        "ggml/src/ggml-backend.cpp",
+        "ggml/src/ggml-backend-meta.cpp",
+        "ggml/src/ggml-opt.cpp",
+        "ggml/src/ggml-threading.cpp",
+        "ggml/src/ggml-quants.c",
+        "ggml/src/gguf.cpp",
+    ],
+    static_libs: ["libggml_base_c"],
+    export_include_dirs: [
+        "ggml/include",
+        "ggml/src",
+    ],
+}
+
+cc_library_static {
+    name: "libggml_cpu_c",
+    defaults: ["uwu_llama_cpp_defaults"],
+    srcs: [
+        "ggml/src/ggml-cpu/ggml-cpu.c",
+    ],
+    static_libs: ["libggml_base"],
+    export_include_dirs: [
+        "ggml/include",
+        "ggml/src",
+        "ggml/src/ggml-cpu",
+    ],
+}
+
+cc_library_static {
+    name: "libggml_cpu",
+    defaults: ["uwu_llama_cpp_defaults"],
+    srcs: [
+        "ggml/src/ggml-cpu/ggml-cpu.cpp",
+        "ggml/src/ggml-cpu/repack.cpp",
+        "ggml/src/ggml-cpu/hbm.cpp",
+        "ggml/src/ggml-cpu/quants.c",
+        "ggml/src/ggml-cpu/traits.cpp",
+        "ggml/src/ggml-cpu/amx/amx.cpp",
+        "ggml/src/ggml-cpu/amx/mmq.cpp",
+        "ggml/src/ggml-cpu/binary-ops.cpp",
+        "ggml/src/ggml-cpu/unary-ops.cpp",
+        "ggml/src/ggml-cpu/vec.cpp",
+        "ggml/src/ggml-cpu/ops.cpp",
+    ],
+    arch: {
+        arm64: {
+            srcs: [
+                "ggml/src/ggml-cpu/arch/arm/quants.c",
+                "ggml/src/ggml-cpu/arch/arm/repack.cpp",
+            ],
+        },
+        x86_64: {
+            srcs: [
+                "ggml/src/ggml-cpu/arch/x86/quants.c",
+                "ggml/src/ggml-cpu/arch/x86/repack.cpp",
+            ],
+        },
+    },
+    static_libs: [
+        "libggml_base",
+        "libggml_base_c",
+        "libggml_cpu_c",
+    ],
+    export_include_dirs: [
+        "ggml/include",
+        "ggml/src",
+        "ggml/src/ggml-cpu",
+    ],
+}
+
+cc_library_static {
+    name: "libggml",
+    defaults: ["uwu_llama_cpp_defaults"],
+    srcs: [
+        "ggml/src/ggml-backend-dl.cpp",
+        "ggml/src/ggml-backend-reg.cpp",
+    ],
+    static_libs: [
+        "libggml_base",
+        "libggml_cpu",
+        "libggml_vulkan",
+    ],
+    export_include_dirs: [
+        "ggml/include",
+        "ggml/src",
+    ],
+}
+
+cc_library_static {
+    name: "libggml_vulkan",
+    defaults: ["uwu_llama_cpp_defaults"],
+    srcs: [
+        "ggml/src/ggml-vulkan/ggml-vulkan.cpp",
+    ],
+    whole_static_libs: ["llama_vulkan_generated_dep"],
+    include_dirs: [
+        "external/SPIRV-Headers/include",
+    ],
+    header_libs: [
+        "llama_vulkan_generated_headers",
+        "vulkan_headers",
+    ],
+    export_include_dirs: [
+        "ggml/include",
+        "ggml/src",
+        "ggml/src/ggml-vulkan",
+    ],
+}
+
+cc_library_static {
+    name: "libllama",
+    defaults: ["uwu_llama_cpp_defaults"],
+    srcs: [
+        "src/llama.cpp",
+        "src/llama-adapter.cpp",
+        "src/llama-arch.cpp",
+        "src/llama-batch.cpp",
+        "src/llama-chat.cpp",
+        "src/llama-context.cpp",
+        "src/llama-cparams.cpp",
+        "src/llama-grammar.cpp",
+        "src/llama-graph.cpp",
+        "src/llama-hparams.cpp",
+        "src/llama-impl.cpp",
+        "src/llama-io.cpp",
+        "src/llama-kv-cache.cpp",
+        "src/llama-kv-cache-iswa.cpp",
+        "src/llama-kv-cache-dsa.cpp",
+        "src/llama-memory.cpp",
+        "src/llama-memory-hybrid.cpp",
+        "src/llama-memory-hybrid-iswa.cpp",
+        "src/llama-memory-recurrent.cpp",
+        "src/llama-mmap.cpp",
+        "src/llama-model-loader.cpp",
+        "src/llama-model-saver.cpp",
+        "src/llama-model.cpp",
+        "src/llama-quant.cpp",
+        "src/llama-sampler.cpp",
+        "src/llama-vocab.cpp",
+        "src/unicode-data.cpp",
+        "src/unicode.cpp",
+        "src/models/*.cpp",
+    ],
+    static_libs: ["libggml"],
+    export_include_dirs: [
+        "include",
+        "src",
+    ],
+}
