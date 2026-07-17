@@ -4967,9 +4967,17 @@ static void ggml_vk_load_shaders(vk_device& device, vk_pipeline requested) {
         ggml_vk_create_pipeline(device, it.second, "fa_mask_opt", fa_mask_opt_len, fa_mask_opt_data, "main", 2, sizeof(vk_op_flash_attn_mask_opt_push_constants), {1, 1, 1}, {128, 128 / device->subgroup_size, BrBc.first, BrBc.second}, 1, true, true, device->subgroup_size);
     }
 
-    if (device->subgroup_clustered && device->subgroup_require_full_support) {
+    const bool use_subgroup_quantize =
+        device->vendor_id != VK_VENDOR_ID_QUALCOMM &&
+        device->subgroup_clustered &&
+        device->subgroup_require_full_support;
+
+    if (use_subgroup_quantize) {
         ggml_vk_create_pipeline(device, device->pipeline_quantize_q8_1_x4, "quantize_q8_1_x4", quantize_q8_1_x4_subgroup_len, quantize_q8_1_x4_subgroup_data, "main", 2, sizeof(vk_quantize_q8_1_push_constants), {32 * device->subgroup_size / 8, 1, 1}, { device->subgroup_size }, 1, true, true);
     } else {
+        if (device->vendor_id == VK_VENDOR_ID_QUALCOMM) {
+            GGML_LOG_INFO("ggml_vulkan: using non-subgroup quantize_q8_1_x4 shader on Qualcomm GPU\n");
+        }
         ggml_vk_create_pipeline(device, device->pipeline_quantize_q8_1_x4, "quantize_q8_1_x4", quantize_q8_1_x4_len, quantize_q8_1_x4_data, "main", 2, sizeof(vk_quantize_q8_1_push_constants), {32 * device->subgroup_size / 8, 1, 1}, { device->subgroup_size }, 1);
     }
 
