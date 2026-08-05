@@ -213,6 +213,8 @@ cc_library_static {
         "src/llama-kv-cache.cpp",
         "src/llama-kv-cache-iswa.cpp",
         "src/llama-kv-cache-dsa.cpp",
+        "src/llama-kv-cache-msa.cpp",
+        "src/llama-kv-cache-dsv4.cpp",
         "src/llama-memory.cpp",
         "src/llama-memory-hybrid.cpp",
         "src/llama-memory-hybrid-iswa.cpp",
