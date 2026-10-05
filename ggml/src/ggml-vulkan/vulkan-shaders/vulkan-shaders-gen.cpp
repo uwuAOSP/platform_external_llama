@@ -335,7 +335,10 @@ compile_count_guard acquire_compile_slot() {
 }
 
 void string_to_spv_func(std::string name, std::string in_path, std::string out_path, std::map<std::string, std::string> defines, bool coopmat, bool dep_file, compile_count_guard slot) {
-    std::string target_env = (name.find("_cm2") != std::string::npos) ? "--target-env=vulkan1.3" : "--target-env=vulkan1.2";
+    const auto bda = defines.find("BDA");
+    const bool needs_core12 = coopmat || (bda != defines.end() && bda->second == "1");
+    std::string target_env = (name.find("_cm2") != std::string::npos) ? "--target-env=vulkan1.3" :
+                             needs_core12 ? "--target-env=vulkan1.2" : "--target-env=vulkan1.1";
 
     #ifdef _WIN32
         std::vector<std::string> cmd = {GLSLC, "-fshader-stage=compute", target_env, "\"" + in_path + "\"", "-o", "\"" + out_path + "\""};
